@@ -35,6 +35,8 @@ console-reports:
 ktlint:
   active: true
   autoCorrect: false
+  ImportOrdering:
+    active: false
   NoConsecutiveBlankLines:
     active: true
   NoMultipleSpaces:
