@@ -1,4 +1,7 @@
-package com.example.financeapp
+package com.example.financeapp.legacy
+
+import com.example.financeapp.FinanceAppTheme
+import com.example.financeapp.R
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
