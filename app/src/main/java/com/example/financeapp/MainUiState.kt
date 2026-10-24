@@ -1,38 +1,58 @@
 package com.example.financeapp
 
 internal data class MainUiState(
-    val balance: Int = 25_000,
+    val amount: String = "",
+    val description: String = "",
+    val type: TransactionType = TransactionType.EXPENSE,
+    val balance: Int = 0,
     val transactionCount: Int = 0,
+    val transactions: List<Transaction> = emptyList(),
+    val error: TransactionError? = null,
 )
 
-internal enum class TransactionType {
-    INCOME, EXPENSE
-}
+internal enum class TransactionType { INCOME, EXPENSE }
+
+internal enum class TransactionError { INVALID_INPUT, AMOUNT_TOO_LARGE }
 
 internal data class Transaction(
     val amount: Int,
     val type: TransactionType,
+    val description: String,
 )
 
 internal sealed interface MainUiEvent {
+    data class AmountChanged(val value: String) : MainUiEvent
+    data class DescriptionChanged(val value: String) : MainUiEvent
+    data class TypeChanged(val type: TransactionType) : MainUiEvent
     data class AddTransaction(val transaction: Transaction) : MainUiEvent
+    data object InvalidTransaction : MainUiEvent
+    data object AmountTooLarge : MainUiEvent
 }
 
 internal fun reduce(state: MainUiState, event: MainUiEvent): MainUiState = when (event) {
+    is MainUiEvent.AmountChanged -> {
+        if (event.value.all(Char::isDigit)) state.copy(amount = event.value, error = null)
+        else state
+    }
+    is MainUiEvent.DescriptionChanged -> state.copy(description = event.value, error = null)
+    is MainUiEvent.TypeChanged -> state.copy(type = event.type, error = null)
+    MainUiEvent.InvalidTransaction -> state.copy(error = TransactionError.INVALID_INPUT)
+    MainUiEvent.AmountTooLarge -> state.copy(error = TransactionError.AMOUNT_TOO_LARGE)
     is MainUiEvent.AddTransaction -> {
-        val transaction = event.transaction
-
-        require(transaction.amount > 0)
-
-        val delta = when (transaction.type) {
-            TransactionType.INCOME -> transaction.amount
-            TransactionType.EXPENSE -> -transaction.amount
+        val tx = event.transaction
+        require(tx.amount > 0)
+        require(tx.description.isNotBlank())
+        val change = if (tx.type == TransactionType.INCOME) tx.amount else -tx.amount
+        val next = state.balance.toLong() + change
+        if (next !in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
+            state.copy(error = TransactionError.AMOUNT_TOO_LARGE)
+        } else {
+            state.copy(
+                amount = "", description = "",
+                balance = next.toInt(),
+                transactionCount = state.transactionCount + 1,
+                transactions = state.transactions + tx, error = null,
+            )
         }
-
-        state.copy(
-            balance = state.balance + delta,
-            transactionCount = state.transactionCount + 1
-        )
     }
 }
-
