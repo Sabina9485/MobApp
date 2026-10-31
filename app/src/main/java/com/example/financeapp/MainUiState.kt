@@ -1,5 +1,4 @@
 package com.example.financeapp
-
 internal data class MainUiState(
     val amount: String = "",
     val description: String = "",
