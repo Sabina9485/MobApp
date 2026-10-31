@@ -15,56 +15,27 @@ internal class TransactionViewModel : ViewModel() {
 
     fun addTransaction() {
         val description = uiState.description.trim()
+        if (uiState.amount.isEmpty() || description.isEmpty()) {
+            onEvent(MainUiEvent.InvalidTransaction)
+            return
+        }
         val amount = uiState.amount.toIntOrNull()
-        val event = when {
-            uiState.amount.isEmpty() || description.isEmpty() -> MainUiEvent.InvalidTransaction
-
-            amount == null -> MainUiEvent.AmountTooLarge
-
-            amount <= 0 -> MainUiEvent.InvalidTransaction
-
-            else -> MainUiEvent.AddTransaction(
-                Transaction(amount = amount, type = uiState.type, description = description),
-            )
+        if (amount == null) {
+            onEvent(MainUiEvent.AmountTooLarge)
+            return
         }
-        onEvent(event)
-    }
-
-    private fun reduce(state: MainUiState, event: MainUiEvent): MainUiState = when (event) {
-        is MainUiEvent.AmountChanged -> {
-            if (event.value.all(Char::isDigit)) state.copy(amount = event.value, error = null) else state
+        if (amount <= 0) {
+            onEvent(MainUiEvent.InvalidTransaction)
+            return
         }
-
-        is MainUiEvent.DescriptionChanged -> state.copy(description = event.value, error = null)
-
-        is MainUiEvent.TypeChanged -> state.copy(type = event.type, error = null)
-
-        MainUiEvent.InvalidTransaction -> state.copy(error = TransactionError.INVALID_INPUT)
-
-        MainUiEvent.AmountTooLarge -> state.copy(error = TransactionError.AMOUNT_TOO_LARGE)
-
-        is MainUiEvent.AddTransaction -> {
-            val transaction = event.transaction
-            require(transaction.amount > 0) { "Transaction amount must be positive" }
-            require(transaction.description.isNotBlank()) { "Transaction description must not be blank" }
-
-            val balanceChange = when (transaction.type) {
-                TransactionType.INCOME -> transaction.amount
-                TransactionType.EXPENSE -> -transaction.amount
-            }
-            val newBalance = state.balance.toLong() + balanceChange
-            if (newBalance !in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
-                state.copy(error = TransactionError.AMOUNT_TOO_LARGE)
-            } else {
-                state.copy(
-                    amount = "",
-                    description = "",
-                    balance = newBalance.toInt(),
-                    transactionCount = state.transactionCount + 1,
-                    transactions = state.transactions + transaction,
-                    error = null,
+        onEvent(
+            MainUiEvent.AddTransaction(
+                Transaction(
+                    amount = amount,
+                    type = uiState.type,
+                    description = description,
                 )
-            }
-        }
+            )
+        )
     }
 }

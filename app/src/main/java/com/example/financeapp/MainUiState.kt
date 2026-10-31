@@ -31,13 +31,21 @@ internal sealed interface MainUiEvent {
 
 internal fun reduce(state: MainUiState, event: MainUiEvent): MainUiState = when (event) {
     is MainUiEvent.AmountChanged -> {
-        if (event.value.all(Char::isDigit)) state.copy(amount = event.value, error = null)
-        else state
+        if (event.value.all(Char::isDigit)) {
+            state.copy(amount = event.value, error = null)
+        } else {
+            state
+        }
     }
+
     is MainUiEvent.DescriptionChanged -> state.copy(description = event.value, error = null)
+
     is MainUiEvent.TypeChanged -> state.copy(type = event.type, error = null)
+
     MainUiEvent.InvalidTransaction -> state.copy(error = TransactionError.INVALID_INPUT)
+
     MainUiEvent.AmountTooLarge -> state.copy(error = TransactionError.AMOUNT_TOO_LARGE)
+
     is MainUiEvent.AddTransaction -> {
         val tx = event.transaction
         require(tx.amount > 0)
@@ -48,10 +56,12 @@ internal fun reduce(state: MainUiState, event: MainUiEvent): MainUiState = when 
             state.copy(error = TransactionError.AMOUNT_TOO_LARGE)
         } else {
             state.copy(
-                amount = "", description = "",
+                amount = "",
+                description = "",
                 balance = next.toInt(),
                 transactionCount = state.transactionCount + 1,
-                transactions = state.transactions + tx, error = null,
+                transactions = state.transactions + tx,
+                error = null,
             )
         }
     }
