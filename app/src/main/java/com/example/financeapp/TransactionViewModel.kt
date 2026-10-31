@@ -15,27 +15,32 @@ internal class TransactionViewModel : ViewModel() {
 
     fun addTransaction() {
         val description = uiState.description.trim()
-        if (uiState.amount.isEmpty() || description.isEmpty()) {
-            onEvent(MainUiEvent.InvalidTransaction)
-            return
-        }
         val amount = uiState.amount.toIntOrNull()
-        if (amount == null) {
-            onEvent(MainUiEvent.AmountTooLarge)
-            return
-        }
-        if (amount <= 0) {
-            onEvent(MainUiEvent.InvalidTransaction)
-            return
-        }
-        onEvent(
-            MainUiEvent.AddTransaction(
-                Transaction(
-                    amount = amount,
-                    type = uiState.type,
-                    description = description,
+
+        when {
+            uiState.amount.isEmpty() || description.isEmpty() -> {
+                onEvent(MainUiEvent.InvalidTransaction)
+            }
+
+            amount == null -> {
+                onEvent(MainUiEvent.AmountTooLarge)
+            }
+
+            amount <= 0 -> {
+                onEvent(MainUiEvent.InvalidTransaction)
+            }
+
+            else -> {
+                onEvent(
+                    MainUiEvent.AddTransaction(
+                        Transaction(
+                            amount = amount,
+                            type = uiState.type,
+                            description = description,
+                        )
+                    )
                 )
-            )
-        )
+            }
+        }
     }
 }
