@@ -19,4 +19,5 @@ cd "$repo_root"
 
 echo "Запуск Detekt перед push..."
 echo "Running Detekt before push..."
+./gradlew detekt
 
