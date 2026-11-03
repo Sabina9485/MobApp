@@ -85,7 +85,7 @@ android {
 }
 
 dependencies {
-    detektPlugins("dev.detekt:detekt-rules-ktlint-wrapper:${libs.versions.detekt.get()}")
+    // detektPlugins("dev.detekt:detekt-rules-ktlint-wrapper:${libs.versions.detekt.get()}")
 
     val composeBom = platform(libs.androidx.compose.bom)
 

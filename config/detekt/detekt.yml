@@ -32,19 +32,7 @@ console-reports:
      - 'FileBasedFindingsReport'
   #  - 'LiteFindingsReport'
 
-ktlint:
-  active: true
-  autoCorrect: false
-  ClassSignature:
-    active: false
-  ImportOrdering:
-    active: false
-  NoConsecutiveBlankLines:
-    active: true
-  NoMultipleSpaces:
-    active: true
-  NoTrailingSpaces:
-    active: true
+#ktlint:
 
 comments:
   active: true

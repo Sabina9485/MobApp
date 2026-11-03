@@ -24,5 +24,3 @@ class MainActivity : ComponentActivity() {
 internal fun FinanceAppTheme(content: @Composable () -> Unit) {
     MaterialTheme(content = content)
 }
-}
-
