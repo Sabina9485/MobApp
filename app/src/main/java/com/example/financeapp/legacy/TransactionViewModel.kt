@@ -1,17 +1,21 @@
-package com.example.financeapp
+package com.example.financeapp.legacy
 
 import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import com.example.financeapp.MainUiEvent
+import com.example.financeapp.MainUiState
+import com.example.financeapp.Transaction
+import com.example.financeapp.TransactionError
+import com.example.financeapp.TransactionType
 
 internal class TransactionViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = TransactionRepository(application)
 
     var uiState by mutableStateOf(MainUiState())
         private set
-
 
     init {
         repository.load { transactions ->
@@ -29,7 +33,6 @@ internal class TransactionViewModel(application: Application) : AndroidViewModel
             }
         }
     }
-
 
     fun onEvent(event: MainUiEvent) {
         if (!uiState.isDatabaseReady || uiState.isSaving) return
@@ -56,12 +59,10 @@ internal class TransactionViewModel(application: Application) : AndroidViewModel
         }
     }
 
-
     override fun onCleared() {
         repository.close()
         super.onCleared()
     }
-
 
     private fun reduce(state: MainUiState, event: MainUiEvent): MainUiState = when (event) {
         is MainUiEvent.AmountChanged -> {
@@ -100,7 +101,6 @@ internal class TransactionViewModel(application: Application) : AndroidViewModel
             }
         }
     }
-
 
     fun addTransaction() {
         val description = uiState.description.trim()

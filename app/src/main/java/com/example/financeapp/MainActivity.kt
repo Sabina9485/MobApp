@@ -6,14 +6,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import com.example.financeapp.data.RoomTransactionRepository
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val database = TransactionDatabase.open(applicationContext)
+        val repository = RoomTransactionRepository(database.transactionDao())
+
         setContent {
             FinanceAppTheme {
-                FinanceNavigation()
+                FinanceNavigation(repository = remember { repository })
             }
         }
     }

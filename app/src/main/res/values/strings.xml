@@ -25,5 +25,10 @@
     <string name="async_load">Загрузить операции</string>
     <string name="async_retry">Повторить</string>
     <string name="async_simulate_error">Имитировать ошибку</string>
+    <string name="type_income">Доход</string>
+    <string name="type_expense">Расход</string>
+    <string name="label_amount">Сумма</string>
+    <string name="label_description">Описание</string>
+    <string name="action_save">Сохранить</string>
     <string name="async_error">Не удалось загрузить операции. Попробуйте ещё раз.</string>
 </resources>

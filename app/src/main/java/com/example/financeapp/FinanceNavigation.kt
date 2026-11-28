@@ -1,108 +1,77 @@
 package com.example.financeapp
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.financeapp.coroutines.AsyncTransactionsScreen
-import com.example.financeapp.coroutines.AsyncTransactionsViewModel
+import com.example.financeapp.domain.TransactionRepository
+import com.example.financeapp.ui.editor.EditorScreen
+import com.example.financeapp.ui.editor.EditorStatus
+import com.example.financeapp.ui.editor.EditorViewModel
+import com.example.financeapp.ui.history.HistoryIntent
+import com.example.financeapp.ui.history.HistoryScreen
+import com.example.financeapp.ui.history.HistoryViewModel
 
-private const val TRANSACTIONS_ROUTE = "transactions"
-private const val ASYNC_TRANSACTIONS_ROUTE = "async-transactions"
-private const val SETTINGS_ROUTE = "settings"
+private const val HISTORY_ROUTE = "history"
+private const val EDITOR_ROUTE = "editor"
 
 @Composable
 @Suppress("FunctionNaming")
-internal fun FinanceNavigation() {
+internal fun FinanceNavigation(repository: TransactionRepository) {
     val navController = rememberNavController()
-    val transactionViewModel: TransactionViewModel = viewModel()
-    var showBalance by rememberSaveable { mutableStateOf(true) }
 
-    NavHost(navController = navController, startDestination = ASYNC_TRANSACTIONS_ROUTE) {
-        composable(ASYNC_TRANSACTIONS_ROUTE) {
-            val viewModel: AsyncTransactionsViewModel = viewModel()
-            AsyncTransactionsScreen(
-                viewModel = viewModel,
-                onOpenLegacy = {
-                    viewModel.cancelLoad()
-                    navController.navigate(TRANSACTIONS_ROUTE) { launchSingleTop = true }
-                },
-            )
-        }
-        composable(TRANSACTIONS_ROUTE) {
-            TransactionScreen(
-                viewModel = transactionViewModel,
-                showBalance = showBalance,
-                onOpenSettings = {
-                    navController.navigate(SETTINGS_ROUTE) {
-                        launchSingleTop = true
-                    }
-                },
-            )
-        }
-        composable(SETTINGS_ROUTE) {
-            SettingsScreen(
-                showBalance = showBalance,
-                onShowBalanceChange = { showBalance = it },
-                onBack = { navController.navigateUp() },
-            )
+    val factory = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return when {
+                modelClass.isAssignableFrom(HistoryViewModel::class.java) ->
+                    HistoryViewModel(repository) as T
+                modelClass.isAssignableFrom(EditorViewModel::class.java) ->
+                    EditorViewModel(repository) as T
+                else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
+            }
         }
     }
-}
 
-@Composable
-@Suppress("FunctionNaming")
-private fun SettingsScreen(
-    showBalance: Boolean,
-    onShowBalanceChange: (Boolean) -> Unit,
-    onBack: () -> Unit,
-) {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(value = showBalance, role = Role.Switch, onValueChange = onShowBalanceChange),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(stringResource(R.string.settings_show_balance), modifier = Modifier.weight(1f))
-                Switch(checked = showBalance, onCheckedChange = null)
+    NavHost(
+        navController = navController,
+        startDestination = HISTORY_ROUTE
+    ) {
+        composable(HISTORY_ROUTE) {
+            val viewModel: HistoryViewModel = viewModel(factory = factory)
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            HistoryScreen(
+                state = state,
+                onRetry = { viewModel.onIntent(HistoryIntent.Retry) },
+                onAddClick = {
+                    navController.navigate(EDITOR_ROUTE) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(EDITOR_ROUTE) {
+            val viewModel: EditorViewModel = viewModel(factory = factory)
+            val state by viewModel.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(state.status) {
+                if (state.status == EditorStatus.SAVED) {
+                    navController.popBackStack()
+                }
             }
-            TextButton(onClick = onBack) {
-                Text(stringResource(R.string.settings_back))
-            }
+
+            EditorScreen(
+                state = state,
+                onIntent = viewModel::onIntent
+            )
         }
     }
 }
